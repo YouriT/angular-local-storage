@@ -117,9 +117,16 @@ describe('localStorageService', function() {
   }
 
   beforeEach(module('LocalStorageModule', function($provide) {
-
+    spyOn(window, 'addEventListener').andCallThrough();
+    spyOn(window, 'removeEventListener').andCallThrough();
     $provide.value('$window', {
-      localStorage: localStorageMock()
+      localStorage: localStorageMock(),
+      addEventListener: function () {
+        window.addEventListener.apply(window, arguments);
+      },
+      removeEventListener : function (){
+        window.removeEventListener.apply(window, arguments);
+      }
     });
 
   }));
@@ -286,6 +293,7 @@ describe('localStorageService', function() {
     $rootScope.$digest();
 
     expect($rootScope.property).toEqual(localStorageService.get('property'));
+    expect(window.addEventListener).toHaveBeenCalled();
   }));
 
   it('should be able to unbind from scope variable', inject(function($rootScope, localStorageService) {
@@ -303,6 +311,7 @@ describe('localStorageService', function() {
     $rootScope.$digest();
 
     expect($rootScope.property).not.toEqual(localStorageService.get('property'));
+    expect(window.removeEventListener).toHaveBeenCalled();
   }));
 
   it('should be able to bind to properties of objects', inject(function($rootScope, localStorageService) {
@@ -318,6 +327,26 @@ describe('localStorageService', function() {
     expect($rootScope.obj.property).toEqual(localStorageService.get('obj.property'));
   }));
 
+  it('should update a bound value when local storage is updated', inject(function ($rootScope, localStorageService, $window){
+    localStorageService.bind($rootScope, 'test');
+    $rootScope.$digest();
+
+    // set the value in local storage mock to a value, then emit a changed event
+    var testValue = 'test';
+    $window.localStorage['ls.test'] = testValue;
+    var evt = document.createEvent('CustomEvent');
+    evt.key = 'ls.test';
+    evt.newValue = 'test value';
+    evt.initCustomEvent('storage', true, true, {
+      key: 'ls.test',
+      newValue: testValue
+    });
+    window.dispatchEvent(evt);
+    $rootScope.$digest();
+
+    expect($rootScope.test).toEqual(testValue);
+  }));
+
   it('should be able to bind to scope using different key', inject(function($rootScope, localStorageService) {
 
     localStorageService.set('lsProperty', 'oldValue');
@@ -329,6 +358,7 @@ describe('localStorageService', function() {
     $rootScope.$digest();
 
     expect($rootScope.property).toEqual(localStorageService.get('lsProperty'));
+    expect(window.addEventListener).toHaveBeenCalled();
   }));
 
   it('should $watch with deep comparison only for objects', inject(function($rootScope, localStorageService) {
