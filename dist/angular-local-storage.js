@@ -1,6 +1,6 @@
 /**
  * An Angular module that gives you access to the browsers local storage
- * @version v0.1.5 - 2014-11-06
+ * @version v0.1.5 - 2014-11-26
  * @link https://github.com/grevory/angular-local-storage
  * @author grevory <greg@gregpike.ca>
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -413,6 +413,7 @@ angularLocalStorage.provider('localStorageService', function() {
       var onKeyUpdated = function (event) {
         if (event.key == deriveQualifiedKey(key)) {
           scope[key] = getFromLocalStorage(key);
+          $rootScope.$broadcast('LocalStorageModule.notification.scopechanged', {key: key, storageType: self.storageType});
           scope.$apply();
         }
       };
