@@ -386,6 +386,7 @@ angularLocalStorage.provider('localStorageService', function() {
       var onKeyUpdated = function (event) {
         if (event.key == deriveQualifiedKey(key)) {
           scope[key] = getFromLocalStorage(key);
+          $rootScope.$broadcast('LocalStorageModule.notification.scopechanged', {key: key, storageType: self.storageType});
           scope.$apply();
         }
       };

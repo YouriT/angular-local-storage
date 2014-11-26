@@ -347,6 +347,27 @@ describe('localStorageService', function() {
     expect($rootScope.test).toEqual(testValue);
   }));
 
+  iit('should broadcast an event when scope has been updated', inject(function ($rootScope, localStorageService, $window) {
+    localStorageService.bind($rootScope, 'test');
+    $rootScope.$digest();
+
+    // set the value in local storage mock to a value, then emit a changed event
+    var testValue = 'test';
+    $window.localStorage['ls.test'] = testValue;
+    var evt = document.createEvent('CustomEvent');
+    evt.key = 'ls.test';
+    evt.newValue = 'test value';
+    evt.initCustomEvent('storage', true, true, {
+      key: 'ls.test',
+      newValue: testValue
+    });
+    var spy = spyOn($rootScope, '$broadcast');
+    window.dispatchEvent(evt);
+    $rootScope.$digest();
+
+    expect($rootScope.$broadcast).toHaveBeenCalledWith('LocalStorageModule.notification.scopechanged', jasmine.any(Object));
+  }));
+
   it('should be able to bind to scope using different key', inject(function($rootScope, localStorageService) {
 
     localStorageService.set('lsProperty', 'oldValue');
